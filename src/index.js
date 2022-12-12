@@ -47,5 +47,66 @@ app.post("/categories", async (req, res) => {
     }
 });
 
+app.get("/games", async (req, res) => {
+ 
+});
+
+app.post("/games", async (req, res) => {
+    const { name, image, stockTotal, categoryId, pricePerDay } = req.body;
+    if (!name || !image || !stockTotal || !categoryId || !pricePerDay) {
+        res.sendStatus(400);
+    }
+    else if((await connectionDb.query("SELECT * FROM games WHERE name = $1", [name])).rows.length > 0) {
+        res.sendStatus(409);
+    } else {
+        try {
+            await connectionDb.query("INSERT INTO games (name, image, stockTotal, categoryId, pricePerDay) VALUES ($1, $2, $3, $4, $5)", [name, image, stockTotal, categoryId, pricePerDay]);
+            res.sendStatus(201);
+        } catch (error) {
+            console.log(error);
+            res.sendStatus(500);
+        }
+    }
+});
+
+app.get("/customers", async (req, res) => {
+    const { cpf } = req.query;
+
+    if(!cpf) {
+        try {
+            const result = (await connectionDb.query("SELECT * FROM customers")).rows;
+            res.send(result);
+        } catch (error) {
+            console.log(error);
+            res.sendStatus(500);
+        }
+    } else{
+        try {
+            const result = (await connectionDb.query("SELECT * FROM customers WHERE cpf = $1%", [cpf])).rows;
+            res.send(result);
+        } catch (error) {
+            console.log(error);
+            res.sendStatus(500);
+        }
+    }
+});
+
+app.get("/customers/:id", async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const result = (await connectionDb.query("SELECT * FROM customers WHERE id = $1", [id])).rows;
+        if(result.length === 0) {
+            res.sendStatus(404);
+        } else {
+            res.send(result[0]);
+        }
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+});
+
+
 const port = 5000;
 app.listen(port, () => console.log(`Server Running in port ${port}`));
