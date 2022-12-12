@@ -60,7 +60,7 @@ app.post("/games", async (req, res) => {
         res.sendStatus(409);
     } else {
         try {
-            await connectionDb.query("INSERT INTO games (name, image, stockTotal, categoryId, pricePerDay) VALUES ($1, $2, $3, $4, $5)", [name, image, stockTotal, categoryId, pricePerDay]);
+            await connectionDb.query("INSERT INTO games (name, image, stockTotal, categoryId, pricePerDay) VALUES ($1, $2, $3, $4, $5);", [name, image, `'${stockTotal}'`, `'${categoryId}'`, `'${pricePerDay}'`]);
             res.sendStatus(201);
         } catch (error) {
             console.log(error);
@@ -82,7 +82,7 @@ app.get("/customers", async (req, res) => {
         }
     } else{
         try {
-            const result = (await connectionDb.query("SELECT * FROM customers WHERE cpf = $1%", [cpf])).rows;
+            const result = (await connectionDb.query("SELECT * FROM customers WHERE cpf LIKE $1", [`${cpf}%`])).rows;
             res.send(result);
         } catch (error) {
             console.log(error);
@@ -104,6 +104,44 @@ app.get("/customers/:id", async (req, res) => {
     } catch (error) {
         console.log(error);
         res.sendStatus(500);
+    }
+});
+
+app.post("/customers", async (req, res) => {
+    const { name, phone, cpf, birthday } = req.body;
+
+    if (!name || !phone || !cpf || !birthday) {
+        res.sendStatus(400);
+    } else if((await connectionDb.query("SELECT * FROM customers WHERE cpf = $1", [cpf])).rows.length > 0) {
+        res.sendStatus(409);
+    } else {
+        try {
+            await connectionDb.query("INSERT INTO customers (name, phone, cpf, birthday) VALUES ($1, $2, $3, $4)", [name, phone, cpf, birthday]);
+            res.sendStatus(201);
+        } catch (error) {
+            console.log(error);
+            res.sendStatus(500);
+        }
+    }
+});
+
+app.put("/customers/:id", async (req, res) => {
+    const { id } = req.params;
+    const { name, phone, cpf, birthday } = req.body;
+
+    if (!name || !phone || !cpf || !birthday) {
+        res.sendStatus(400);
+    } else if((await connectionDb.query("SELECT * FROM customers WHERE id = $1", [id])).rows.length > 0) {
+        res.sendStatus(409);
+    }
+     else {
+        try {
+            await connectionDb.query("UPDATE customers SET name = $1, phone = $2, cpf = $3, birthday = $4 WHERE id = $5", [name, phone, cpf, birthday, id]);
+            res.sendStatus(200);
+        } catch (error) {
+            console.log(error);
+            res.sendStatus(500);
+        }
     }
 });
 
