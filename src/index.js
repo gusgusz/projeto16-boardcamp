@@ -48,7 +48,25 @@ app.post("/categories", async (req, res) => {
 });
 
 app.get("/games", async (req, res) => {
- 
+ const { name } = req.query;
+
+    if(!name) {
+        try {
+            const result = (await connectionDb.query("SELECT * FROM games")).rows;
+            res.send(result);
+        } catch (error) {
+            console.log(error);
+            res.sendStatus(500);
+        }
+    } else{
+        try {
+            const result = (await connectionDb.query("SELECT * FROM games WHERE name LIKE $1", [`${name}%`])).rows;
+            res.send(result);
+        } catch (error) {
+            console.log(error);
+            res.sendStatus(500);
+        }
+    }
 });
 
 app.post("/games", async (req, res) => {
@@ -60,7 +78,7 @@ app.post("/games", async (req, res) => {
         res.sendStatus(409);
     } else {
         try {
-            await connectionDb.query("INSERT INTO games (name, image, stockTotal, categoryId, pricePerDay) VALUES ($1, $2, $3, $4, $5);", [name, image, `'${stockTotal}'`, `'${categoryId}'`, `'${pricePerDay}'`]);
+            await connectionDb.query(`INSERT INTO games (name, image, "stockTotal", "categoryId", "pricePerDay") VALUES ($1, $2, $3, $4, $5);`, [name, image, stockTotal, categoryId, pricePerDay]);
             res.sendStatus(201);
         } catch (error) {
             console.log(error);
