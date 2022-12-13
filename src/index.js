@@ -4,8 +4,23 @@ import pkg from 'pg';
 import joi from 'joi';
 
 const categoriesSchema = joi.object({
-    name: joi.string().required(),
+    name: joi.string().min(1).required(),
 });
+
+const gamesSchema = joi.object({
+    name: joi.string().min(1).required(),
+    image: joi.string().min(5).required(),
+    stockTotal: joi.number().required(),
+    categoryId: joi.number().min(1).integer().required(),
+    pricePerDay: joi.number().min(1).required(),
+  });
+
+  const customersSchema = joi.object({
+    name: joi.string().min(1).required(),
+    phone: joi.string().min(10).max(11).required(),
+    cpf: joi.string().min(11).max(11).required(),
+    birthday: joi.date().required(),
+  });
 
  
 const { Pool } = pkg;
@@ -77,7 +92,11 @@ app.get("/games", async (req, res) => {
 
 app.post("/games", async (req, res) => {
     const { name, image, stockTotal, categoryId, pricePerDay } = req.body;
-    if (!name || !image || !stockTotal || !categoryId || !pricePerDay) {
+    const validation = gamesSchema.validate(req.body);
+    if (validation.error) {
+        res.sendStatus(400);
+    }
+    else if (categoryId <= 0 && pricePerDay <= 0) {
         res.sendStatus(400);
     }
     else if((await connectionDb.query("SELECT * FROM games WHERE name = $1", [name])).rows.length > 0) {
@@ -133,10 +152,13 @@ app.get("/customers/:id", async (req, res) => {
 
 app.post("/customers", async (req, res) => {
     const { name, phone, cpf, birthday } = req.body;
-
-    if (!name || !phone || !cpf || !birthday) {
+    const validation = customersSchema.validate(req.body);
+    if (validation.error) {
+        console.log(validation.error.details[0].message);
         res.sendStatus(400);
-    } else if((await connectionDb.query("SELECT * FROM customers WHERE cpf = $1", [cpf])).rows.length > 0) {
+    }
+
+     else if((await connectionDb.query("SELECT * FROM customers WHERE cpf = $1", [cpf])).rows.length > 0) {
         res.sendStatus(409);
     } else {
         try {
