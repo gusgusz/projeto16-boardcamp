@@ -300,5 +300,19 @@ app.post("/rentals/:id/return", async (req, res) => {
     
 });
 
+app.delete(/rentals/:id, async (req, res) => {
+    const { id } = req.params;
+    if((await connectionDb.query("SELECT * FROM rentals WHERE id = $1", [id])).rows.length === 0) {
+        res.sendStatus(404);
+    }
+    try {
+        await connectionDb.query("DELETE FROM rentals WHERE id = $1", [id]);
+        res.sendStatus(200);
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+});
+
 const port = 5000;
 app.listen(port, () => console.log(`Server Running in port ${port}`));
