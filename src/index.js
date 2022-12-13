@@ -279,13 +279,14 @@ app.post("/rentals/:id/return", async (req, res) => {
         
             
             await connectionDb.query(
-                `UPDATE rentals SET "delayFee"=$1, "returnDate"=$2 WHERE id=$3`,
+                `UPDATE rentals SET "delayFee" "returnDate" VALUES ($1,$2) WHERE id=$3`,
                 [delayFee, returnDate, id]
               );
-              res.sendStatus(200);}
+              res.sendStatus(200);
+            }
               else{
                 await connectionDb.query(
-                    `UPDATE rentals SET "returnDate"=$2 WHERE id=$2`,
+                    `UPDATE rentals SET "returnDate" VALUES ($1) WHERE id=$2`,
                     [returnDate, id]
                   );
                   res.sendStatus(200);
@@ -300,7 +301,7 @@ app.post("/rentals/:id/return", async (req, res) => {
     
 });
 
-app.delete(/rentals/:id, async (req, res) => {
+app.delete("/rentals/:id", async (req, res) => {
     const { id } = req.params;
     if((await connectionDb.query("SELECT * FROM rentals WHERE id = $1", [id])).rows.length === 0) {
         res.sendStatus(404);
