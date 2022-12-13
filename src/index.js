@@ -305,6 +305,9 @@ app.delete(/rentals/:id, async (req, res) => {
     if((await connectionDb.query("SELECT * FROM rentals WHERE id = $1", [id])).rows.length === 0) {
         res.sendStatus(404);
     }
+    if((await connectionDb.query("SELECT * FROM rentals WHERE id = $1", [id])).rows[0].returnDate !== null) {
+        res.sendStatus(400);
+    }
     try {
         await connectionDb.query("DELETE FROM rentals WHERE id = $1", [id]);
         res.sendStatus(200);
