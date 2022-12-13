@@ -1,6 +1,11 @@
 import express from "express";
 import cors from 'cors';
 import pkg from 'pg';
+import joi from 'joi';
+
+const categoriesSchema = joi.object({
+    name: joi.string().required(),
+});
 
  
 const { Pool } = pkg;
@@ -31,7 +36,8 @@ app.get("/categories", async (req, res) => {
 
 app.post("/categories", async (req, res) => {
     const { name } = req.body;
-    if (!name) {
+    const validation = categoriesSchema.validate(req.body);
+    if (validation.error) {
         res.sendStatus(400);
     } else if((await connectionDb.query("SELECT * FROM categories WHERE name = $1", [name])).rows.length > 0) {
         res.sendStatus(409);
